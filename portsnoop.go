@@ -11,29 +11,46 @@ import (
 )
 
 var (
-	version = "developement"
+	version = "developement version 0.1"
 )
 
 func main() {
 
 	// CL Arguments
-	showVersion := flag.Bool("version", false, "Shows the current version of program")
-	host := flag.String("h", "", "Defines host.")
-	port := flag.Int("p", 0, "Defines port for lookup")
-	portSeries := flag.String("p*", "", "Defines series of ports")
+	host := flag.String("h", "", "Defines host either by domain or ip. Required to run program.")
+	port := flag.Int("p", 0, "Defines port for lookup..")
+	portSeries := flag.String("p*", "", "Defines series of ports separated with comma [,].")
 	portRange := flag.String("pr", "", "Defines range of ports.")
-	help := flag.Bool("help", false, "Shows this help")
+	timeOut := flag.Int("to", 0, "Defines connection timeout in millseconds.")
+	showVersion := flag.Bool("version", false, "Shows the current version of program.")
+	help := flag.Bool("help", false, "Shows this help.")
+	byPassLogo := flag.Bool("l", false, "Hides logo from startup.")
 
 	flag.Parse()
 
 	defaultTimeOut := 100 * time.Millisecond
 
-	printLogo()
-
 	if *showVersion {
 		fmt.Printf("PortSnoop version %s\n", version)
 		os.Exit(0)
 	}
+
+	if !*byPassLogo {
+		printLogo()
+	}
+
+	// Help
+
+	if *help {
+		flag.Usage()
+		return
+	}
+
+	if *timeOut != 0 {
+		defaultTimeOut = time.Duration(*timeOut) * time.Millisecond
+	}
+
+	fmt.Printf("Timeout set to %fs.\n", defaultTimeOut.Seconds())
 
 	// IP address lookup for given host
 
@@ -50,6 +67,9 @@ func main() {
 			fmt.Printf("The IP address of %s is %s\n", *host, ip)
 		}
 
+	} else {
+		fmt.Println("Host not provided. Program can't run. Please check syntax or flag -help.")
+		os.Exit(0)
 	}
 
 	// Singular port lookup lookup
@@ -108,14 +128,6 @@ func main() {
 			}
 		}
 	}
-
-	// Help
-
-	if *help {
-		flag.Usage()
-		return
-	}
-
 }
 
 func snoopPort(host string, port int, timeout time.Duration) bool {
